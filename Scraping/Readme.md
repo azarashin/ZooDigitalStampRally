@@ -211,4 +211,25 @@ animal_list_in_place[2].taxon_id.tsv にはTAXGON_ID の値が含まれていな
 python .\inaturalist_downloader.py .\animal_list_in_place[2].taxon_id.tsv
 ```
 
+## 独自の画像を学習データにする（必要に応じて）
+
+### 動画から画像を一枚ずつ抽出する
+
+movie2picture.py を使用する。
+
+引数で指定されたパスの動画を読み込み、中央部分の最大正方形領域を抽出して256x256サイズに縮小し、ファイルに保存する
+
+```
+positional arguments:
+  input                 入力動画パス
+
+options:
+  -h, --help            show this help message and exit
+  -o, --output OUTPUT   出力ディレクトリ, デフォルト値:frames
+  --size SIZE           出力画像サイズ（正方形）, デフォルト値:256
+  --format {png,jpg,jpeg}
+                        出力画像形式, デフォルト値: png
+```
+
+
 
