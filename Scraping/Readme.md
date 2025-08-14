@@ -150,4 +150,51 @@ animal_list_in_place[X].tsv
 ...
 ```
 
+## TAXON_ID付与
+
+name2taxon_id.py を使用する
+
+```
+python ./name2taxon_id.py (path_to_table_file)
+```
+
+path_to_table_file には前述したanimal_list_in_place[X].tsv を指定し、animal_list_in_place[X].tsv の学名の欄をあらかじめ埋めておくこと。
+
+```
+日本語名	学名	ImageURL    TAXON_ID
+```
+
+本スクリプトは上記のように属性が並んでいるファイル（1行目はタイトル）から
+学名を読み込み、学名からTAXON_ID を求めて書き込む。
+元のファイルにはTAXON_ID が書かれていなくてもよく、
+ダミー値が書かれていてもよい。
+ImageURL は要素自体が存在しなければならないが、
+空文字でもよい。
+
+出力ファイル名はanimal_list_in_place[X].taxon_id.tsv である。
+
+入力ファイルの例：
+
+```
+日本語名	学名	ImageURL    TAXON_ID
+アカカンガルー	Osphranter rufus	https://www.tokyo-zoo.net/Encyclopedia/Species//Y.AKAKANNGARU-_1001.jpg
+アジアゾウ	Elephas maximus	https://www.tokyo-zoo.net/Encyclopedia/Species//X.AJIAZOU_1003.jpg
+アフリカゾウ	Loxodonta africana	
+
+```
+
+実行例：
+```
+python .\name2taxon_id.py .\animal_list_in_tama.txt
+```
+
+出力ファイルの例：
+
+```
+日本語名	学名	ImageURL	TAXON_ID
+アカカンガルー	Osphranter rufus	https://www.tokyo-zoo.net/Encyclopedia/Species//Y.AKAKANNGARU-_1001.jpg	1453439
+アジアゾウ	Elephas maximus	https://www.tokyo-zoo.net/Encyclopedia/Species//X.AJIAZOU_1003.jpg	43697
+アフリカゾウ	Loxodonta africana		43694
+```
+
 
