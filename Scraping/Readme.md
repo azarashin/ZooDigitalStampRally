@@ -109,6 +109,12 @@ animal_list_in_place[X].tsv
 
 という名前のファイルが出力されるので、内容を確認しておく。
 （Xは選択した動物園の通し番号。）
+本ファイルには下記４列が含まれているが、この段階では学名とTAXON_IDの欄は空欄である。
+
+- 日本語名
+- 学名
+- ImageURL
+- TAXON_ID
 
 出力例：
 ```tsv
@@ -118,3 +124,30 @@ animal_list_in_place[X].tsv
 アフリカゾウ		https://www.tokyo-zoo.net/Encyclopedia/Species//Y.AFURIKAZOU_1006.jpg	
 ...
 ```
+
+## 動物に対する学名の付与(手動でデータを加工する)
+
+動物にはそれぞれ学名が定義されており、上述したanimal_list_in_place[X].tsv の「学名」列にそれぞれの動物に対する学名を追記する。
+現状学名の追記作業は手作業であるが、生成AIを使うなどして学名を付与することも可能である。
+(詳細な手順は省略)
+
+更新前のファイル例：
+```tsv
+日本語名	学名	ImageURL	TAXON_ID
+アカカンガルー		https://www.tokyo-zoo.net/Encyclopedia/Species//Y.AKAKANNGARU-_1001.jpg	
+アジアゾウ		https://www.tokyo-zoo.net/Encyclopedia/Species//X.AJIAZOU_1003.jpg	
+アフリカゾウ		https://www.tokyo-zoo.net/Encyclopedia/Species//Y.AFURIKAZOU_1006.jpg	
+...
+```
+
+更新後のファイル例：
+```tsv
+日本語名	学名	ImageURL    TAXON_ID
+アカカンガルー	Osphranter rufus	https://www.tokyo-zoo.net/Encyclopedia/Species//Y.AKAKANNGARU-_1001.jpg
+アジアゾウ	Elephas maximus	https://www.tokyo-zoo.net/Encyclopedia/Species//X.AJIAZOU_1003.jpg
+アフリカゾウ	Loxodonta africana	https://www.tokyo-zoo.net/Encyclopedia/Species//Y.AFURIKAZOU_1006.jpg
+
+...
+```
+
+
