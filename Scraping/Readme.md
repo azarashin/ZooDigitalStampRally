@@ -19,4 +19,46 @@ https://www.tokyo-zoo.net/encyclopedia/species_detail?species_code={id}
 interval_sec = 1
 ```
 
-取得したHTMLデータはcache ディレクトリ配下に格納される。
+取得したHTMLデータはcache ディレクトリ配下に格納され、
+
+```
+cache/{id}.html
+```
+
+のように通し番号で名前付けされる。
+
+### HTML からの情報抽出
+
+pickupper.py を使用する。
+
+cache ディレクトリはいかに格納された通し番号付きの名前のHTMLデータを解析し、
+下記の情報をjson 形式で出力する。
+
+| 属性名 | 概要 |
+| --- | --- |
+| name | 名称 | 
+| image_url | 代表画像のURL |
+| facilities | 飼育園館 |
+| habitat | 生息地 |
+| size | 体の大きさ |
+| food | えさ |
+| feature | 特徴 |
+
+出力例：
+
+```
+[
+    {
+        "name": "アカカンガルー",
+        "image_url": "https://www.tokyo-zoo.net/Encyclopedia/Species//Y.AKAKANNGARU-_1001.jpg",
+        "facilities": [
+            "多摩動物公園"
+        ],
+        "habitat": "オーストラリア大陸のほぼ全域",
+        "size": "おとなのオスで体長1.3〜1.6ｍ、尾長0.8〜1ｍ、体重約80kg",
+        "food": "主食は草で、木の芽や葉なども食べます。動物園では、牧草やニンジン、りんご、パンなどをあたえています。",
+        "feature": "カンガルーは有袋類（ゆうたいるい＝おなかにある袋で子どもを育てる仲間）の代表的な動物です。ひらけた草原に10〜12頭の群れをつくってくらしています。昼間は直射日光をさけて休息し、夜間に草などを食べます。とびはねるときは後あしをそろえてとび、尾を地面につけていますが、速度をだすときは尾を上にあげ地面につけません。短距離では時速50km近い速さで走ることができます。"
+    },
+```
+
+出力ファイル名は./animal_data_set.json で固定である。
