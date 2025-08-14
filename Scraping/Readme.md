@@ -197,4 +197,18 @@ python .\name2taxon_id.py .\animal_list_in_tama.txt
 アフリカゾウ	Loxodonta africana		43694
 ```
 
+## iNaturalist からcc0, cc-byに絞って画像を取得する
+
+inaturalist_downloader.py を使用する。
+
+第一引数にanimal_list_in_place[2].taxon_id.tsv へのパスを指定し、スクリプトを実行すると、images/XXX/ ディレクトリ配下にXXXで示される学名の動物画像を取得する。
+iNaturalist からデータを取得する際にTAXGON_ID を使用するため、
+animal_list_in_place[2].taxon_id.tsv にはTAXGON_ID の値が含まれていなければならない。
+
+実行例：
+
+```bash
+python .\inaturalist_downloader.py .\animal_list_in_place[2].taxon_id.tsv
+```
+
 
