@@ -62,3 +62,59 @@ cache ディレクトリはいかに格納された通し番号付きの名前�
 ```
 
 出力ファイル名は./animal_data_set.json で固定である。
+
+### 動物名と画像URLを抽出してテーブル化する
+
+filter.py を使用する。
+本スクリプトを実行し、./animal_data_set.json から動物の情報を読み込んで成形し、
+動物名と画像URLを抽出してテーブル化する。
+
+下記のようにしてスクリプトを実行する。
+
+実行例：
+```bash
+$ python .\filter.py
+--- menu ---
+1. 動物園の一覧を表示する
+2. 指定された動物園にいる動物の一覧を表示する
+999. 終了する
+input: 2
+0: 上野動物園
+1: 井の頭自然文化園
+2: 多摩動物公園
+3: 大島公園動物園
+4: 葛西臨海水族園
+5: 都立動物園では飼育していません
+input: 2
+アカカンガルー  https://www.tokyo-zoo.net/Encyclopedia/Species//Y.AKAKANNGARU-_1001.jpg
+アジアゾウ      https://www.tokyo-zoo.net/Encyclopedia/Species//X.AJIAZOU_1003.jpg
+...
+アカカンガルー  https://www.tokyo-zoo.net/Encyclopedia/Species//Y.AKAKANNGARU-_1001.jpg
+フサオネズミカンガルー  https://www.tokyo-zoo.net/Encyclopedia/Species//Y.fusao_nezumi_kanga_04.jpg
+レッサーパンダ  https://www.tokyo-zoo.net/Encyclopedia/Species//X.redpanda.jpg
+計：76
+animal_list_in_place[2].tsv に一覧が出力されました
+--- menu ---
+1. 動物園の一覧を表示する
+2. 指定された動物園にいる動物の一覧を表示する
+999. 終了する
+input: 999
+$ 
+```
+
+スクリプトを起動後、「指定された動物園にいる動物の一覧を表示する」を選択して
+所望の動物園を選択すると、
+
+animal_list_in_place[X].tsv
+
+という名前のファイルが出力されるので、内容を確認しておく。
+（Xは選択した動物園の通し番号。）
+
+出力例：
+```tsv
+日本語名	学名	ImageURL	TAXON_ID
+アカカンガルー		https://www.tokyo-zoo.net/Encyclopedia/Species//Y.AKAKANNGARU-_1001.jpg	
+アジアゾウ		https://www.tokyo-zoo.net/Encyclopedia/Species//X.AJIAZOU_1003.jpg	
+アフリカゾウ		https://www.tokyo-zoo.net/Encyclopedia/Species//Y.AFURIKAZOU_1006.jpg	
+...
+```
