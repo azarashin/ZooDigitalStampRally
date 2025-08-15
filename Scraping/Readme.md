@@ -205,6 +205,21 @@ inaturalist_downloader.py を使用する。
 iNaturalist からデータを取得する際にTAXGON_ID を使用するため、
 animal_list_in_place[2].taxon_id.tsv にはTAXGON_ID の値が含まれていなければならない。
 
+```
+iNaturarist から画像を取得
+
+positional arguments:
+  input                 動物リスト(.tsv)へのパス
+
+options:
+  -h, --help            show this help message and exit
+  -o OUTPUT, --output OUTPUT
+                        出力ディレクトリ（画像を保存）
+  -n MAX_NUMBER, --max_number MAX_NUMBER
+                        取得する画像の最大数
+```
+
+
 実行例：
 
 ```bash

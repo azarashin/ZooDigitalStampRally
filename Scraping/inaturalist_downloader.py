@@ -7,6 +7,7 @@ iNaturalist から Panthera leo (taxon_id=42048) の CC0/CC-BY 画像を一括DL
 必要ライブラリ: requests
 """
 
+import argparse
 import csv
 import os
 import sys
@@ -103,7 +104,7 @@ class INaturalistDownloader:
             for r in rows:
                 writer.writerow(r)
 
-    def main(self):
+    def main(self, max_number):
         self.ensure_outdir()
         seen_meta = self.load_existing_meta()
 
@@ -183,6 +184,12 @@ class INaturalistDownloader:
                     })
                     seen_meta.add(photo_id)
                     total_downloaded += 1
+                    print(f'{self.OUT_DIR}: {total_downloaded} / {max_number}\r', end='')
+                    if total_downloaded >= max_number:
+                        print(f'')
+                        break
+                if total_downloaded >= max_number:
+                    break
 
             if rows_to_write:
                 self.append_meta(rows_to_write)
@@ -193,14 +200,20 @@ class INaturalistDownloader:
             pages_done += 1
             page += 1
             time.sleep(self.REQUEST_INTERVAL)
+            if total_downloaded >= max_number:
+                break
 
+        print(f'')
         print(f"[DONE] Download complete. Total photos processed: {len(seen_meta)}; newly downloaded: {total_downloaded}")
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print('usage: python ./inaturalist_downloader.py (path_to_animal_list.tsv)')
-        exit()
-    path = sys.argv[1].strip()
+    parser = argparse.ArgumentParser(description="iNaturarist から画像を取得")
+    parser.add_argument("input", help="動物リスト(.tsv)へのパス")
+    parser.add_argument("-o", "--output", default="images", help="出力ディレクトリ（画像を保存）")
+    parser.add_argument("-n", "--max_number", type=int, default=200, help="取得する画像の最大数")
+    args = parser.parse_args()
+
+    path = args.input
     source = open(path, 'r', encoding='utf-8').readlines()
     title_line = source[0]
     data_lines = source[1:]
@@ -211,5 +224,5 @@ if __name__ == "__main__":
             exit()
     for data in data_lines:
         name, scientific, url, taxon_id = [d.strip() for d in data.split('\t')]
-        inaturalist_downloader = INaturalistDownloader(taxon_id, f'images/{scientific}')
-        inaturalist_downloader.main()
+        inaturalist_downloader = INaturalistDownloader(taxon_id, f'{args.output}/{scientific}')
+        inaturalist_downloader.main(args.max_number)
