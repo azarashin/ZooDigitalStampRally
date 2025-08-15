@@ -6,10 +6,11 @@ Square Crop Tool (overlay-safe)
 - 表示縮尺と元画像の座標を厳密対応させる
 """
 
-import sys
+import shutil
 import os
 import cv2
 import logging
+import argparse
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -130,31 +131,24 @@ def crop_from_base_and_save(base_img, img_path: Path, square_o) -> bool:
     y2 = min(y + h, H)
     x = max(0, x); y = max(0, y)
     if x >= x2 or y >= y2:
-        logging.error(f"選択範囲が不正: {square_o} @ {img_path.name}")
+        logging.error(f"選択範囲が不正: {square_o} @ {img_path}")
         return False
     crop = base_img[y:y2, x:x2].copy()
     ok = cv2.imwrite(str(img_path), crop)
     if ok:
-        logging.info(f"保存: {img_path.name}  (size={crop.shape[1]}x{crop.shape[0]})")
+        logging.info(f"保存: {img_path}  (size={crop.shape[1]}x{crop.shape[0]})")
     else:
         logging.error(f"保存失敗: {img_path}")
     return ok
 
-def delete_file(p: Path):
-    try:
-        os.remove(p)
-        logging.info(f"削除: {p.name}")
-        return True
-    except Exception as e:
-        logging.error(f"削除失敗: {p} ({e})")
-        return False
-
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python crop_square_tool_overlay_safe.py /path/to/images")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="正方形領域を切り出して再保存")
+    parser.add_argument("input", help="入力画像ディレクトリパス")
+    parser.add_argument("-o", "--output", default="../ImageDetect/training_images", help="出力ディレクトリ（学習データを格納）")
+    args = parser.parse_args()
 
-    root = Path(sys.argv[1]).expanduser().resolve()
+    root = Path(args.input).expanduser().resolve()
+    out_dir = args.output
     files = sorted(list(root.glob("*.jpg")) + list(root.glob("*.jpeg")))
     for file in files:
         print(file)
@@ -195,6 +189,12 @@ def main():
 
             title = f"{WINDOW_NAME}  -  {path.name}  ({i+1}/{len(files)})"
             cv2.imshow(WINDOW_NAME, view_img)
+            
+            out_path_parts = str(path).replace('\\', '/').split('/')
+            out_sub_dir = f'{out_dir}/{out_path_parts[-2]}'
+            out_path = f'{out_sub_dir}/{out_path_parts[-1]}'
+            if not os.path.exists(out_sub_dir):
+                os.mkdir(out_sub_dir)
 
             if key in KEY_Q or key in KEY_ESC:
                 cv2.destroyAllWindows()
@@ -203,20 +203,19 @@ def main():
                 selector.reset()
                 logging.info("選択リセット")
             elif key in KEY_SPACE or key in KEY_N:
-                logging.info(f"スキップ: {i}, {path.name}")
+                logging.info(f"そのまま採用: {i}, {path.name}")
+                shutil.copy(path, out_path)
                 i += 1
                 break
             elif key in KEY_DEL:
-                if delete_file(path):
-                    files.pop(i)
-                else:
-                    i += 1
+                logging.info(f"学習データに含めない: {i}, {path.name}")
+                i += 1
                 break
             elif key in KEY_ENTER:
                 if selector.final_square_o is None:
                     logging.error(f"正方形が選択されていません: {path.name}")
                 else:
-                    if crop_from_base_and_save(base_img, path, selector.final_square_o):
+                    if crop_from_base_and_save(base_img, out_path, selector.final_square_o):
                         i += 1
                         break
                     else:

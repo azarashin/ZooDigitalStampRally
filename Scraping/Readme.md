@@ -263,3 +263,18 @@ python .\square_image_selector.py (対象画像の入ったディレクトリへ
 | 画像を破棄する | DELキーを押す |
 | 画像の一部分のみを使用する | マウスドラッグで範囲を選択してEnterキーを押す |
 
+
+```
+usage: square_image_selector.py [-h] [-o OUTPUT] input
+
+正方形領域を切り出して再保存
+
+positional arguments:
+  input                 入力画像ディレクトリパス
+
+options:
+  -h, --help            show this help message and exit
+  -o OUTPUT, --output OUTPUT
+                        出力ディレクトリ（学習データを格納）
+
+```
