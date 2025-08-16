@@ -147,8 +147,12 @@ def main():
     parser.add_argument("-o", "--output", default="../ImageDetect/training_images", help="出力ディレクトリ（学習データを格納）")
     args = parser.parse_args()
 
-    root = Path(args.input).expanduser().resolve()
-    out_dir = args.output
+    input = args.input.replace('\\', '/').replace('"', '')
+    if input[-1] == '/':
+        input = input[:-1]
+    out_dir = args.output.replace('\\', '/').replace('"', '')
+    root = Path(input).expanduser().resolve()
+    
     files = sorted(list(root.glob("*.jpg")) + list(root.glob("*.jpeg")))
     for file in files:
         print(file)
