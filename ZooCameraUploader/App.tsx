@@ -13,7 +13,7 @@ import * as MediaLibrary from "expo-media-library";
 import * as ImageManipulator from "expo-image-manipulator";
 import * as FileSystem from "expo-file-system";
 
-const API_ENDPOINT = "https://example.com/api/upload";
+const API_ENDPOINT = "http://192.168.0.37:3000/api/upload";
 
 export default function App() {
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
