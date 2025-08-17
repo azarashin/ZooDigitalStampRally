@@ -15,6 +15,26 @@ import * as FileSystem from "expo-file-system";
 
 const API_ENDPOINT = "http://192.168.0.37:3000/api/upload";
 
+type AnalyzeResponse = {
+  ok: boolean;
+  file?: {
+    size: number;
+    mimetype: string;
+  };
+predict?: {
+    best_label: string;
+    best_confidence: number;
+    topk?: [{
+       label: string; 
+       confidence: number;
+      }];
+  };
+  meta?: {
+    userId?: string;
+  };
+  bytes?: number;
+};
+
 export default function App() {
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [mediaPermStatus, requestMediaPermission] =
@@ -126,8 +146,13 @@ export default function App() {
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }
+      // JSON 取得
+      const data = (await res.json()) as unknown;
 
-      Alert.alert("送信完了", "サーバに画像を送信しました。");
+      // 型アサーション（軽量）：サーバの契約が決まっている前提
+      const d = data as AnalyzeResponse;
+
+      Alert.alert(d.predict?.best_label + "\n" + d.predict?.best_confidence);
     } catch (e: any) {
       Alert.alert("送信エラー", e?.message ?? String(e));
     } finally {
