@@ -73,7 +73,6 @@ async def upload_image(
             "best_label": result["pred_label"], 
             "best_confidence": result["pred_confidence"],
             "topk": result["topk"], 
-            "mimetype": file.content_type,
         },
         "meta": {
             "userId": userId,
