@@ -10,6 +10,11 @@ import torchvision
 import torchvision.transforms as T
 from torchvision.models import resnet50, ResNet50_Weights
 
+
+'''
+python .\trainer_with_unknown.py --data_root ./training_images
+'''
+
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 class TransformSubset(torch.utils.data.Dataset):
