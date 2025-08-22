@@ -64,7 +64,7 @@ class Estimator:
         pred = torch.where(accept, c, torch.full_like(c, -1))
         return pred.cpu(), pmax.cpu(), energy.cpu(), p.cpu()
 
-    def __init__(self, meta_src, label_src, weights, device, batch_size = 16, topk = 10):
+    def __init__(self, meta_src, label_src, weights, device, batch_size = 16):
         # Load meta / labels
         meta = self.load_meta(meta_src)
         self._labels_map = self.load_labels(label_src)           # {"0":"lion",...}
@@ -74,7 +74,6 @@ class Estimator:
         self._tau_msp    = meta["thresholds"]["tau_msp"]
         self._T          = meta["thresholds"]["temperature"]
         self._batch_size = batch_size
-        self._topk = topk
 
         # Build model & load weights
         self._model = Model(num_classes=self._num_classes).to(device)
@@ -84,7 +83,7 @@ class Estimator:
         # Preprocess
         self._tf = self.build_transform(meta)
 
-    def estimate(self, paths):
+    def predict_paths(self, paths, topk = 10):
         # Batched inference
         rows = []
         batch_imgs, batch_paths = [], []
@@ -106,8 +105,8 @@ class Estimator:
                     label = self._labels_map[str(idx)] if idx >= 0 else "-1"
                     # top-k (only if ID)
                     if idx >= 0:
-                        topk = min(self._topk, self._num_classes)
-                        topk_idx = torch.topk(prob[i], k=topk).indices.tolist()
+                        modified_topk = min(topk, self._num_classes)
+                        topk_idx = torch.topk(prob[i], k=modified_topk).indices.tolist()
                         topk_pairs = [(j, float(prob[i][j])) for j in topk_idx]
                     else:
                         topk_pairs = []
@@ -129,8 +128,8 @@ class Estimator:
                 idx = int(pred[i].item())
                 label = self._labels_map[str(idx)] if idx >= 0 else "-1"
                 if idx >= 0:
-                    topk = min(self._topk, self._num_classes)
-                    topk_idx = torch.topk(prob[i], k=topk).indices.tolist()
+                    modified_topk = min(topk, self._num_classes)
+                    topk_idx = torch.topk(prob[i], k=modified_topk).indices.tolist()
                     topk_pairs = [(j, float(prob[i][j])) for j in topk_idx]
                 else:
                     topk_pairs = []
@@ -143,6 +142,73 @@ class Estimator:
                     "topk": topk_pairs
                 })
         return rows
+    
+    def predict_image_path(self, image_path, topk = 10):
+        # Batched inference
+        rows = []
+        batch_imgs, batch_paths = [], []
+        try:
+            img = Image.open(image_path).convert("RGB")
+        except Exception as e:
+            print(f"[warn] failed to open {image_path}: {e}")
+            return None
+        x = self._tf(img)  # (3,H,W)
+        batch_imgs.append(x)
+        batch_paths.append(image_path)
+
+        X = torch.stack(batch_imgs, 0)  # (B,3,H,W)
+        pred, pmax, energy, prob = self.predict_batch(self._model, X, self._tau_energy, self._tau_msp, self._T)
+        for i in range(X.size(0)):
+            idx = int(pred[i].item())
+            label = self._labels_map[str(idx)] if idx >= 0 else "-1"
+            # top-k (only if ID)
+            if idx >= 0:
+                modified_topk = min(topk, self._num_classes)
+                topk_idx = torch.topk(prob[i], k=modified_topk).indices.tolist()
+                topk_pairs = [(j, float(prob[i][j])) for j in topk_idx]
+            else:
+                topk_pairs = []
+            return {
+                "path": batch_paths[i],
+                "pred_idx": idx,
+                "pred_label": label,
+                "pmax": float(pmax[i]),
+                "energy": float(energy[i]),
+                "topk": topk_pairs
+            }
+
+        return None
+
+    def predict_image(self, image, topk = 10):
+        # Batched inference
+        rows = []
+        batch_imgs, batch_paths = [], []
+
+        x = self._tf(image)  # (3,H,W)
+        batch_imgs.append(x)
+
+        X = torch.stack(batch_imgs, 0)  # (B,3,H,W)
+        pred, pmax, energy, prob = self.predict_batch(self._model, X, self._tau_energy, self._tau_msp, self._T)
+        for i in range(X.size(0)):
+            idx = int(pred[i].item())
+            label = self._labels_map[str(idx)] if idx >= 0 else "-1"
+            # top-k (only if ID)
+            if idx >= 0:
+                modified_topk = min(topk, self._num_classes)
+                topk_idx = torch.topk(prob[i], k=modified_topk).indices.tolist()
+                topk_pairs = [(j, float(prob[i][j])) for j in topk_idx]
+            else:
+                topk_pairs = []
+            return {
+                "path": None,
+                "pred_idx": idx,
+                "pred_label": label,
+                "pmax": float(pmax[i]),
+                "energy": float(energy[i]),
+                "topk": topk_pairs
+            }
+
+        return None
 
 def list_images(input_path: str) -> List[str]:
     # file / dir / glob に対応
@@ -175,7 +241,7 @@ if __name__ == "__main__":
     else:
         device = args.device
 
-    est = Estimator(args.meta, args.labels, args.weights, device, args.batch_size, args.topk)
+    est = Estimator(args.meta, args.labels, args.weights, device, args.batch_size)
 
 
     # Images
@@ -184,7 +250,10 @@ if __name__ == "__main__":
         print(f"No images found for: {args.input}")
         exit()
 
-    rows = est.estimate(paths)
+    if len(paths) == 1:
+        rows = [est.predict_image_path(paths[0], args.topk)]
+    else:
+        rows = est.predict_paths(paths, args.topk)
 
     # Print summary
     for r in rows:
