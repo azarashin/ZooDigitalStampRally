@@ -8,6 +8,18 @@ from PIL import Image, UnidentifiedImageError
 from utils_image_union import ImageUnionConverter
 from estimator import ResNet50Classifier
 
+'''
+サーバ起動：
+
+uvicorn server:app --reload --port 3000 --host (host)
+'''
+
+'''
+テストする場合：
+
+curl.exe -X POST http://(host):3000/api/upload -F "file=@./training_images/Acinonyx jubatus/photo_381806451.jpeg" ./training_images/Acinonyx jubatus/photo_381806451.jpeg
+'''
+
 # 保存先ディレクトリ
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
