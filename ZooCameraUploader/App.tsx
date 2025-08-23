@@ -101,23 +101,6 @@ type StampLog = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// ----- ストレージヘルパ -----
-async function loadStamps(): Promise<boolean[]> {
-  const raw = await AsyncStorage.getItem(STORAGE_KEY);
-  let arr: boolean[] =
-    raw ? (JSON.parse(raw) as boolean[]) : Array(STAMP_COUNT).fill(false);
-  // 長さの補正（設定を後から変えた場合に備える）
-  if (arr.length !== STAMP_COUNT) {
-    const next = Array(STAMP_COUNT).fill(false);
-    for (let i = 0; i < Math.min(arr.length, STAMP_COUNT); i++) next[i] = arr[i];
-    arr = next;
-  }
-  return arr;
-}
-async function saveStamps(arr: boolean[]) {
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
-}
-
 // --------- 日付ユーティリティ ---------
 function todayISO(): string {
   const d = new Date();
