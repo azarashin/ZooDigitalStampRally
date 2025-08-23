@@ -375,7 +375,7 @@ function CameraScreen({ navigation }: any) {
               onPress={uploadToApi}
               disabled={busy}
             >
-              <Text style={styles.btnText}>API送信</Text>
+              <Text style={styles.btnText}>スタンプ入手</Text>
             </TouchableOpacity>
           </View>
           <TouchableOpacity
