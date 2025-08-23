@@ -48,6 +48,18 @@ const BG_IMAGE = {
   // ← トップ画面の背景。任意のURLに変えてOK（ローカルなら require("./assets/bg.jpg")）
   uri: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1600",
 };
+// 状態画像（A=未入手 / B=7日以内 / C=7日より前）
+// ※ 実運用は下記を require("./assets/a.png") などローカルへ差し替えてください
+const IMG_A = { uri: "https://placehold.co/240x240?text=A" };
+const IMG_B = { uri: "https://placehold.co/240x240/2ecc71/fff?text=B" };
+const IMG_C = { uri: "https://placehold.co/240x240/f1c40f/222?text=C" };
+
+
+// 画面表示時に自動で「今日付」を1件付与するか（以前の自動押印動作を残す場合は true）
+const AUTO_STAMP_ON_VIEW = false;
+
+// 「7日以内」判定の閾値（日）。仕様変更しやすいよう定数化。
+const RECENT_DAYS = 7;
 // ===============================================
 
 type RootStackParamList = {
@@ -55,6 +67,11 @@ type RootStackParamList = {
   Camera: undefined;
   Stamps: undefined;
 };
+
+type StampInfo = {
+  name: string; 
+  acquiredDates: string[];
+}; // ISO日付(YYYY-MM-DD)配列
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -73,6 +90,83 @@ async function loadStamps(): Promise<boolean[]> {
 }
 async function saveStamps(arr: boolean[]) {
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+}
+
+// --------- 日付ユーティリティ ---------
+function todayISO(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`; // 端末TZのローカル日付ベース
+}
+
+function daysDiff(aISO: string, bISO: string): number {
+  const a = new Date(aISO + "T00:00:00");
+  const b = new Date(bISO + "T00:00:00");
+  const ms = b.getTime() - a.getTime();
+  return Math.floor(ms / (24 * 60 * 60 * 1000));
+}
+
+// info → 状態画像（A/B/C）を決定
+function pickStampImage(info: StampInfo, refDateISO = todayISO()) {
+  if (!info.acquiredDates?.length) return IMG_A;
+  // 1つでも「refDateからRECENT_DAYS以内」があればB、なければC
+  const recent = info.acquiredDates.some((d) => {
+    const diff = Math.abs(daysDiff(d, refDateISO));
+    return diff <= RECENT_DAYS;
+  });
+  return recent ? IMG_B : IMG_C;
+}
+
+// --------- ストレージ ---------
+async function loadStampList(): Promise<StampInfo[]> {
+  const raw = await AsyncStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw) as StampInfo[];
+      return normalizeList(parsed);
+    } catch {
+      // 壊れていたら初期化
+    }
+  }
+  // 初期化（未入手）
+  const init: StampInfo[] = Array.from({ length: STAMP_COUNT }, (_, i) => ({
+    name: `スタンプ${i + 1}`,
+    acquiredDates: [],
+  }));
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(init));
+  return init;
+}
+
+function normalizeList(list: StampInfo[]): StampInfo[] {
+  // STAMP_COUNT を変更した場合に合わせる
+  const base = Array.from({ length: STAMP_COUNT }, (_, i) => ({
+    name: `スタンプ${i + 1}`,
+    acquiredDates: [] as string[],
+  }));
+  for (let i = 0; i < Math.min(list.length, base.length); i++) {
+    base[i] = {
+      name: list[i]?.name ?? base[i].name,
+      acquiredDates: Array.isArray(list[i]?.acquiredDates) ? list[i].acquiredDates : [],
+    };
+  }
+  return base;
+}
+
+async function saveStampList(list: StampInfo[]) {
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+}
+
+// 任意のインデックスに「今日」を追加
+async function addToday(list: StampInfo[], index: number): Promise<StampInfo[]> {
+  const d = todayISO();
+  const next = [...list];
+  const arr = new Set(next[index].acquiredDates ?? []);
+  arr.add(d);
+  next[index] = { ...next[index], acquiredDates: Array.from(arr).sort() };
+  await saveStampList(next);
+  return next;
 }
 
 // ----- トップ画面 -----
@@ -299,22 +393,23 @@ function CameraScreen({ navigation }: any) {
 }
 
 
-// ----- スタンプ閲覧画面 -----
+// --------- 画面：スタンプ閲覧 ---------
 function StampsScreen() {
-  const [stamps, setStamps] = useState<boolean[] | null>(null);
+  const [list, setList] = useState<StampInfo[] | null>(null);
 
-  // 画面表示のたびに“次の空き”にスタンプを押して保存
   useFocusEffect(
     useCallback(() => {
       let alive = true;
       (async () => {
-        const arr = await loadStamps();
-        const idx = arr.findIndex((v) => !v);
-        if (idx !== -1) {
-          arr[idx] = true;
-          await saveStamps(arr);
+        let arr = await loadStampList();
+
+        // 旧仕様の「表示のたび押す」を残したい場合はここで1件追加
+        if (AUTO_STAMP_ON_VIEW) {
+          const idx = arr.findIndex((s) => (s.acquiredDates ?? []).length === 0);
+          if (idx !== -1) arr = await addToday(arr, idx);
         }
-        if (alive) setStamps(arr);
+
+        if (alive) setList(arr);
       })();
       return () => {
         alive = false;
@@ -322,7 +417,7 @@ function StampsScreen() {
     }, [])
   );
 
-  if (!stamps) {
+  if (!list) {
     return (
       <View style={styles.center}>
         <ActivityIndicator />
@@ -331,36 +426,64 @@ function StampsScreen() {
     );
   }
 
+  const stampedCount = list.filter((s) => s.acquiredDates.length > 0).length;
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={{ padding: 16 }}>
-        <Text style={styles.titleSm}>
-          スタンプ {stamps.filter(Boolean).length}/{STAMP_COUNT}
+        <Text style={styles.titleSm}>スタンプ {stampedCount}/{STAMP_COUNT}</Text>
+        <Text style={styles.graySm}>
+          ルール：未入手=A, 直近{RECENT_DAYS}日以内=B, それより前=C
         </Text>
       </View>
+
       <FlatList
-        data={stamps.map((v, i) => ({ i, stamped: v }))}
+        data={list.map((s, i) => ({ ...s, i }))}
         keyExtractor={(x) => String(x.i)}
-        numColumns={4}
+        numColumns={3}
         contentContainerStyle={{ padding: 12 }}
         columnWrapperStyle={{ gap: 12 }}
-        renderItem={({ item }) => <StampCell index={item.i} stamped={item.stamped} />}
+        renderItem={({ item }) => (
+          <StampCell
+            name={item.name}
+            dates={item.acquiredDates}
+            onAddToday={async () => {
+              const next = await addToday(list, item.i);
+              setList(next);
+              Alert.alert("スタンプ更新", `${item.name} に本日の日付を追加しました。`);
+            }}
+          />
+        )}
       />
     </SafeAreaView>
   );
 }
 
-function StampCell({ index, stamped }: { index: number; stamped: boolean }) {
+function StampCell({
+  name,
+  dates,
+  onAddToday,
+}: {
+  name: string;
+  dates: string[];
+  onAddToday: () => void;
+}) {
+  const img = pickStampImage({ name, acquiredDates: dates });
+  const latest = dates.length ? dates[dates.length - 1] : null;
+
   return (
-    <View style={[styles.cell, stamped ? styles.cellOn : styles.cellOff]}>
-      <Text style={[styles.cellNum, stamped && styles.cellNumOn]}>
-        {index + 1}
+    <Pressable style={[styles.cell]} onLongPress={onAddToday}>
+      <Image source={img} style={styles.cellImage} />
+      <Text style={styles.cellName} numberOfLines={1}>
+        {name}
       </Text>
-      <Text style={styles.cellIcon}>{stamped ? "✅" : "☆"}</Text>
-    </View>
+      <Text style={styles.cellMeta}>
+        {latest ? `最終入手: ${latest}` : "未入手"}
+      </Text>
+      <Text style={styles.cellHint}>（長押しで今日を追加）</Text>
+    </Pressable>
   );
 }
-
 // ----- ルート -----
 export default function App() {
   return (
@@ -417,14 +540,7 @@ const styles = StyleSheet.create({
   btnText: { color: "#fff", fontWeight: "700" },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24 },
   gray: { color: "#666", marginTop: 8 },
-  bottomBar: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    padding: 12,
-    backgroundColor: "rgba(0,0,0,0.4)",
-  },
+  graySm: { color: "#666" },
   cell: {
     flex: 1,
     aspectRatio: 1,
@@ -434,11 +550,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 12,
   },
-  cellOff: { borderColor: "#bbb", backgroundColor: "#fafafa" },
-  cellOn: { borderColor: "#2ecc71", backgroundColor: "#eafff1" },
-  cellNum: { fontSize: 16, color: "#555", fontWeight: "700" },
-  cellNumOn: { color: "#2e7d32" },
-  cellIcon: { fontSize: 28, marginTop: 6 },
+  cellImage: { width: "70%", height: "55%", resizeMode: "contain" },
+  cellName: { marginTop: 6, fontWeight: "700" },
+  cellMeta: { fontSize: 12, color: "#666" },
+  cellHint: { fontSize: 10, color: "#aaa", marginTop: 2 },
   container: { flex: 1, backgroundColor: "#000" },
   camera: { flex: 1 },
   controls: {
