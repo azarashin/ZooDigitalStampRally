@@ -29,6 +29,7 @@ import { AnalyzeResponse } from "./analyze_response"
 import { StampInfo } from "./stamp_info"
 import { RootStackParamList } from "./root_stack_param_list"
 import { StampLog } from "./stamp_log"
+import { pickStampImage } from "./datetime_utility"
 
 
 
@@ -72,45 +73,7 @@ const AUTO_STAMP_ON_VIEW = false;
 const RECENT_DAYS = 7;
 // ===============================================
 
-
-
 const Stack = createNativeStackNavigator<RootStackParamList>();
-
-// --------- 日付ユーティリティ ---------
-function todayISO(): string {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const hour = String(d.getHours()).padStart(2, "0");
-  const minute = String(d.getMinutes()).padStart(2, "0");
-  const second = String(d.getSeconds()).padStart(2, "0");
-  return `${y}-${m}-${day}T${hour}:${minute}:${second}Z`; // 端末TZのローカル日付ベース
-}
-
-function daysDiff(afterISO: string, beforeISO: string): number {
-  const before = new Date(beforeISO);
-  const after = new Date(afterISO);
-  const ms = after.getTime() - before.getTime();
-  return ms / (24 * 60 * 60 * 1000);
-}
-
-// info → 状態画像（最近・ずっと前）を決定
-function pickStampImage(info: StampLog, refDateISO = todayISO()) {
-  if (!info.acquiredDates?.length) return IMG_UNKNOWN;
-  // 1つでも「refDateからRECENT_DAYS以内」があれば最近、なければずっと前
-  const recent = info.acquiredDates.some((d) => {
-    const diff = daysDiff(refDateISO, d);
-    return diff <= RECENT_DAYS;
-  });
-  return recent ? 
-  {
-    uri: `${ICON_ROOT}/animal_icon/${info.id}/active.jpg`
-  } : 
-  {
-    uri: `${ICON_ROOT}/animal_icon/${info.id}/sleep.jpg`
-  };
-}
 
 // --------- ストレージ ---------
 async function loadStampList(): Promise<StampLog[]> {
@@ -572,7 +535,7 @@ function StampCell({
   name: string;
   dates: string[];
 }) {
-  const img = pickStampImage({ name, id, acquiredDates: dates });
+  const img = pickStampImage(ICON_ROOT, RECENT_DAYS, IMG_UNKNOWN, { name, id, acquiredDates: dates });
   const latest = dates.length ? dates[dates.length - 1] : null;
 
   return (
