@@ -213,25 +213,26 @@ function HomeScreen({ navigation }: any) {
     <ImageBackground source={BG_IMAGE} style={styles.bg} resizeMode="cover">
       <SafeAreaView style={styles.overlay}>
         <Text style={styles.title}>デジタルスタンプラリー</Text>
-        <View style={{ height: 24 }} />
-        <Pressable
-          style={styles.primaryBtn}
-          onPress={() => navigation.navigate("Camera")}
-        >
-          <Text style={styles.btnText}>撮影</Text>
-        </Pressable>
-        <Pressable
-          style={[styles.primaryBtn, styles.secondaryBtn]}
-          onPress={() => navigation.navigate("Stamps")}
-        >
-          <Text style={styles.btnText}>スタンプ閲覧</Text>
-        </Pressable>
+        <View style={styles.homeButtons}>
+          <Pressable
+            style={styles.primaryBtn}
+            onPress={() => navigation.navigate("Camera")}
+          >
+            <Text style={styles.btnText}>撮影</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.primaryBtn, styles.secondaryBtn, styles.mt12]}
+            onPress={() => navigation.navigate("Stamps")}
+          >
+            <Text style={styles.btnText}>スタンプ閲覧</Text>
+          </Pressable>
           <Pressable
             style={[styles.primaryBtn, styles.secondaryBtn, styles.mt12]}
             onPress={async () => await DeleteLog()}
           >
             <Text style={styles.btnText}>【開発用】ログを削除する</Text>
           </Pressable>
+        </View>
       </SafeAreaView>
     </ImageBackground>
   );
@@ -638,6 +639,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 24,
   },
+  homeButtons: {
+    position: "absolute",
+    left: 24,
+    right: 24,
+    bottom: 64,          // ← 下寄せの距離（お好みで調整）
+    alignItems: "center" // ボタンの横位置
+  },
+  mt12: { marginTop: 12 }, // ボタン間スペース  
   title: {
     color: "#fff",
     fontSize: 28,
