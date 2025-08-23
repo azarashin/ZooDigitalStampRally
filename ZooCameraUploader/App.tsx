@@ -347,7 +347,36 @@ function CameraScreen({ navigation }: any) {
       // 型アサーション（軽量）：サーバの契約が決まっている前提
       const d = data as AnalyzeResponse;
 
-      Alert.alert(d.predict?.best_label + "\n" + d.predict?.best_confidence);
+      if(d.predict)
+      {
+        if(d.predict.best_label == "-1")
+        {
+          Alert.alert("動物を見つけられなかった…");
+        }
+        else
+        {
+          let found: boolean = false;
+          STAMP_INFO_LIST.forEach(element => {
+            if(d.predict && element.id == d.predict.best_label)
+            {
+              found = true; 
+              Alert.alert(`${element.name}を見つけた！`);
+            }
+          });
+          if(!found)
+          {
+            // このメッセージが出たらデータの不整合を起こしている可能性あり。
+            Alert.alert("[ERROR]動物を見つけられなかった…");
+          }
+        }
+      }
+      else
+      {
+        // 応答にpredict が含まれていない。サーバ側での応答内容が壊れている。
+        Alert.alert("[ERROR]");
+      }
+
+      //Alert.alert(d.predict?.best_label + "\n" + d.predict?.best_confidence);
     } catch (e: any) {
       Alert.alert("送信エラー", e?.message ?? String(e));
     } finally {
