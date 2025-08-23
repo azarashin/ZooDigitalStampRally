@@ -27,9 +27,7 @@ import {
 const API_ENDPOINT = "http://192.168.0.37:3000/api/upload";
 import { AnalyzeResponse } from "./analyze_response"
 import { StampInfo } from "./stamp_info"
-
-
-
+import { RootStackParamList } from "./root_stack_param_list"
 
 
 const ICON_ROOT : string = "https://pit-creation.com/OpenDataHackathon2025/images/firefly" 
@@ -72,11 +70,6 @@ const AUTO_STAMP_ON_VIEW = false;
 const RECENT_DAYS = 7;
 // ===============================================
 
-type RootStackParamList = {
-  Home: undefined;
-  Camera: undefined;
-  Stamps: undefined;
-};
 
 type StampLog = {
   id: string; 
