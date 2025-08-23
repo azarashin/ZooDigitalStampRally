@@ -76,8 +76,7 @@ const BG_IMAGE = {
   // ← トップ画面の背景。任意のURLに変えてOK（ローカルなら require("./assets/bg.jpg")）
   uri: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1600",
 };
-// 状態画像（A=未入手 / B=7日以内 / C=7日より前）
-// ※ 実運用は下記を require("./assets/a.png") などローカルへ差し替えてください
+// 未入手のスタンプの態画像
 const IMG_UNKNOWN = { uri: `${ICON_ROOT}/unknown.png` };
 
 
