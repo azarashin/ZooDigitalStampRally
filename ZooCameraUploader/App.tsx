@@ -555,15 +555,14 @@ function StampCell({
   const latest = dates.length ? dates[dates.length - 1] : null;
 
   return (
-    <Pressable style={[styles.cell]} onLongPress={onAddToday}>
+    <Pressable style={[styles.cell]}>
       <Image source={img} style={styles.cellImage} />
       <Text style={styles.cellName} numberOfLines={1}>
         {name}
       </Text>
       <Text style={styles.cellMeta}>
-        {latest ? `最終入手: ${latest}` : "未入手"}
+        {latest ? `${latest}` : "未入手"}
       </Text>
-      <Text style={styles.cellHint}>（長押しで今日を追加）</Text>
     </Pressable>
   );
 }
