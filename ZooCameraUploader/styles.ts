@@ -1,0 +1,108 @@
+import {
+  StyleSheet,
+} from "react-native";
+
+// ----- スタイル -----
+export const styles = StyleSheet.create({
+  bg: { flex: 1 },
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.20)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+  homeButtons: {
+    position: "absolute",
+    left: 24,
+    right: 24,
+    top: 320,          // ← 下寄せの距離（お好みで調整）
+    alignItems: "center" // ボタンの横位置
+  },
+  mt12: { marginTop: 12 }, // ボタン間スペース  
+  title: {
+    color: "#fff",
+    fontSize: 28,
+    fontWeight: "800",
+    textShadowColor: "rgba(0,0,0,0.4)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  titleSm: { fontSize: 18, fontWeight: "700" },
+  primaryBtn: {
+    backgroundColor: "#007aff",
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderRadius: 14,
+    minWidth: 220,
+    alignItems: "center",
+  },
+  secondaryBtn: { backgroundColor: "#444" },
+  btnText: { color: "#fff", fontWeight: "700" },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24 },
+  gray: { color: "#666", marginTop: 8 },
+  graySm: { color: "#666" },
+  cell: {
+    flex: 1,
+    aspectRatio: 1,
+    borderRadius: 16,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  cellImage: { width: "70%", height: "55%", resizeMode: "contain" },
+  cellName: { marginTop: 6, fontWeight: "700" },
+  cellMeta: { fontSize: 12, color: "#666" },
+  cellHint: { fontSize: 10, color: "#aaa", marginTop: 2 },
+  container: { flex: 1, backgroundColor: "#000" },
+  camera: { flex: 1 },
+  controls: {
+    position: "absolute",
+    bottom: 28,
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+  },
+  shutter: {
+    width: 78,
+    height: 78,
+    borderRadius: 39,
+    backgroundColor: "#fff",
+    borderWidth: 4,
+    borderColor: "#ddd",
+  },
+  smallBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: "#222",
+  },
+  smallBtnText: { color: "#fff", fontWeight: "600" },
+  previewWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#111",
+  },
+  preview: { width: "100%", height: "75%", resizeMode: "contain" },
+  btn: {
+    backgroundColor: "#007aff",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 14,
+    margin: 8,
+  },
+  secondary: { backgroundColor: "#444" },
+  row: { flexDirection: "row" },
+  hud: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 12,
+    alignItems: "center",
+    gap: 8,
+  },
+  hudText: { color: "#fff", fontWeight: "700" },
+});
