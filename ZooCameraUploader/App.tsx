@@ -78,8 +78,8 @@ const STAMP_INFO_LIST : StampInfo[] = [
 const STAMP_COUNT = STAMP_INFO_LIST.length; // ← スタンプ数（N）
 const STORAGE_KEY = "stamps/v1";
 const BG_IMAGE = {
-  // ← トップ画面の背景。任意のURLに変えてOK（ローカルなら require("./assets/bg.jpg")）
-  uri: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1600",
+  // トップ画面の背景。
+  uri: `${ICON_ROOT}/title/title.jpg`,
 };
 // 未入手のスタンプの態画像
 const IMG_UNKNOWN = { uri: `${ICON_ROOT}/unknown.png` };
@@ -212,7 +212,10 @@ function HomeScreen({ navigation }: any) {
   return (
     <ImageBackground source={BG_IMAGE} style={styles.bg} resizeMode="cover">
       <SafeAreaView style={styles.overlay}>
+        
+        {/*
         <Text style={styles.title}>デジタルスタンプラリー</Text>
+        */}
         <View style={styles.homeButtons}>
           <Pressable
             style={styles.primaryBtn}
@@ -634,7 +637,7 @@ const styles = StyleSheet.create({
   bg: { flex: 1 },
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.35)",
+    backgroundColor: "rgba(0,0,0,0.20)",
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
