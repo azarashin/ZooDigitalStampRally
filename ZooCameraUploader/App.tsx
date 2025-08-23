@@ -530,11 +530,6 @@ function StampsScreen() {
             id={item.id}
             name={item.name}
             dates={item.acquiredDates}
-            onAddToday={async () => {
-              const next = await addToday(list, item.i);
-              setList(next);
-              Alert.alert("スタンプ更新", `${item.name} に本日の日付を追加しました。`);
-            }}
           />
         )}
       />
@@ -546,12 +541,10 @@ function StampCell({
   id,
   name,
   dates,
-  onAddToday,
 }: {
   id: string;
   name: string;
   dates: string[];
-  onAddToday: () => void;
 }) {
   const img = pickStampImage({ name, id, acquiredDates: dates });
   const latest = dates.length ? dates[dates.length - 1] : null;
