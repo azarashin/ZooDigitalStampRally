@@ -25,26 +25,9 @@ import {
 } from "react-native-gesture-handler";
 
 const API_ENDPOINT = "http://192.168.0.37:3000/api/upload";
+import { AnalyzeResponse } from "./analyze_response"
 
-type AnalyzeResponse = {
-  ok: boolean;
-  file?: {
-    size: number;
-    mimetype: string;
-  };
-predict?: {
-    best_label: string;
-    best_confidence: number;
-    topk?: [{
-       label: string; 
-       confidence: number;
-      }];
-  };
-  meta?: {
-    userId?: string;
-  };
-  bytes?: number;
-};
+
 
 type StampInfo = {
   id: string;
