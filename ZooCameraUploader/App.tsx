@@ -513,7 +513,7 @@ function StampsScreen() {
       <View style={{ padding: 16 }}>
         <Text style={styles.titleSm}>スタンプ {stampedCount}/{STAMP_COUNT}</Text>
         <Text style={styles.graySm}>
-          ルール：未入手=A, 直近{RECENT_DAYS}日以内=B, それより前=C
+          ゲットして１週間以上経つと寝てしまうよ
         </Text>
       </View>
 
