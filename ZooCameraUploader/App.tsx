@@ -124,22 +124,25 @@ function todayISO(): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`; // 端末TZのローカル日付ベース
+  const hour = String(d.getHours()).padStart(2, "0");
+  const minute = String(d.getMinutes()).padStart(2, "0");
+  const second = String(d.getSeconds()).padStart(2, "0");
+  return `${y}-${m}-${day}T${hour}:${minute}:${second}Z`; // 端末TZのローカル日付ベース
 }
 
-function daysDiff(aISO: string, bISO: string): number {
-  const a = new Date(aISO + "T00:00:00");
-  const b = new Date(bISO + "T00:00:00");
-  const ms = b.getTime() - a.getTime();
-  return Math.floor(ms / (24 * 60 * 60 * 1000));
+function daysDiff(afterISO: string, beforeISO: string): number {
+  const before = new Date(beforeISO);
+  const after = new Date(afterISO);
+  const ms = after.getTime() - before.getTime();
+  return ms / (24 * 60 * 60 * 1000);
 }
 
-// info → 状態画像（A/B/C）を決定
+// info → 状態画像（最近・ずっと前）を決定
 function pickStampImage(info: StampLog, refDateISO = todayISO()) {
   if (!info.acquiredDates?.length) return IMG_UNKNOWN;
-  // 1つでも「refDateからRECENT_DAYS以内」があればB、なければC
+  // 1つでも「refDateからRECENT_DAYS以内」があれば最近、なければずっと前
   const recent = info.acquiredDates.some((d) => {
-    const diff = Math.abs(daysDiff(d, refDateISO));
+    const diff = daysDiff(refDateISO, d);
     return diff <= RECENT_DAYS;
   });
   return recent ? 
