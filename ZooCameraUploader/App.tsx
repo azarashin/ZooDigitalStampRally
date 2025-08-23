@@ -180,6 +180,16 @@ function normalizeList(list: StampLog[]): StampLog[] {
   return base;
 }
 
+async function DeleteLog() {
+  const init: StampLog[] = Array.from({ length: STAMP_COUNT }, (_, i) => ({
+    id: STAMP_INFO_LIST[i].id,
+    name: STAMP_INFO_LIST[i].name,
+    acquiredDates: [],
+  }));
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(init));
+  Alert.alert("記録を削除しました");
+}
+
 async function saveStampList(list: StampLog[]) {
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(list));
 }
@@ -216,6 +226,12 @@ function HomeScreen({ navigation }: any) {
         >
           <Text style={styles.btnText}>スタンプ閲覧</Text>
         </Pressable>
+          <Pressable
+            style={[styles.primaryBtn, styles.secondaryBtn, styles.mt12]}
+            onPress={async () => await DeleteLog()}
+          >
+            <Text style={styles.btnText}>【開発用】ログを削除する</Text>
+          </Pressable>
       </SafeAreaView>
     </ImageBackground>
   );
