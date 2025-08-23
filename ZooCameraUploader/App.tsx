@@ -18,6 +18,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as MediaLibrary from "expo-media-library";
 import * as ImageManipulator from "expo-image-manipulator";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+} from "react-native-gesture-handler";
 
 const API_ENDPOINT = "http://192.168.0.37:3000/api/upload";
 
@@ -190,6 +195,8 @@ async function addToday(list: StampLog[], index: number): Promise<StampLog[]> {
   return next;
 }
 
+const clamp = (v: number, min = 0, max = 1) => Math.min(max, Math.max(min, v));
+
 // ----- トップ画面 -----
 function HomeScreen({ navigation }: any) {
   return (
@@ -226,6 +233,10 @@ function CameraScreen({ navigation }: any) {
   const [isBack, setIsBack] = useState<boolean>(true);
   const [flash, setFlash] = useState<"off" | "on" | "auto">("off");
   const [busy, setBusy] = useState<boolean>(false);
+
+  const [zoom, setZoom] = useState(0); // 0..1
+  const startZoomRef = useRef(0);
+  const SENSITIVITY = 0.4;  // Pinch の感度
 
   useEffect(() => {
     (async () => {
@@ -272,12 +283,15 @@ function CameraScreen({ navigation }: any) {
   };
 
   /** 端末のフォトライブラリに保存 */
-  const saveToLibrary = async () => {
+  const saveToLibrary = async (alert: boolean) => {
     if (!capturedUri) return;
     try {
       setBusy(true);
       await MediaLibrary.saveToLibraryAsync(capturedUri);
-      Alert.alert("保存完了", "写真をライブラリに保存しました。");
+      if(alert)
+      {
+        Alert.alert("保存完了", "写真をライブラリに保存しました。");
+      }
     } catch (e: any) {
       Alert.alert("保存エラー", e?.message ?? String(e));
     } finally {
@@ -345,9 +359,7 @@ function CameraScreen({ navigation }: any) {
             if(d.predict && element.id == d.predict.best_label)
             {
               found = element.id; 
-              
-              Alert.alert(`${element.name}を見つけた！`);
-              navigation.navigate("Stamps");
+              Alert.alert(`${element.name}を見つけた！\n(自動保存)`);
             }
           });
           if(found == "")
@@ -366,7 +378,16 @@ function CameraScreen({ navigation }: any) {
                 index = i; 
               }
             }
-            list = await addToday(list, index); 
+            if(index != -1)
+            {
+              list = await addToday(list, index); 
+              saveToLibrary(false);
+              navigation.navigate("Stamps");
+            }
+            else
+            {
+              Alert.alert("[ERROR]インデックスエラー");
+            }
             await saveStampList(list);
           }
         }
@@ -385,76 +406,97 @@ function CameraScreen({ navigation }: any) {
     }
   };
 
-  const reset = () => setCapturedUri(null);
+  // ピンチでズーム
+  const pinch = Gesture.Pinch()
+    .onStart(() => {
+      startZoomRef.current = zoom;
+    })
+    .onUpdate((e) => {
+      // scale=1 を基準に相対的に拡大縮小
+      const delta = Math.log(e.scale) * SENSITIVITY;
+      const next = startZoomRef.current + delta;
+      setZoom(clamp(next));
+    });
+
+  const resetCapturedUri = () => setCapturedUri(null);
+
 
   return (
-    <View style={styles.container}>
-      {capturedUri ? (
-        <View style={styles.previewWrap}>
-          <Image source={{ uri: capturedUri }} style={styles.preview} />
-          <View style={styles.row}>
-            <TouchableOpacity
-              style={styles.btn}
-              onPress={saveToLibrary}
-              disabled={busy}
-            >
-              <Text style={styles.btnText}>ライブラリ保存</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.btn}
-              onPress={uploadToApi}
-              disabled={busy}
-            >
-              <Text style={styles.btnText}>スタンプ入手</Text>
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity
-            style={[styles.btn, styles.secondary]}
-            onPress={reset}
-            disabled={busy}
-          >
-            <Text style={styles.btnText}>撮り直す</Text>
-          </TouchableOpacity>
-          {busy && <ActivityIndicator style={{ marginTop: 12 }} />}
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureDetector gesture={pinch}>
+        <View style={styles.container}>
+          {capturedUri ? (
+            <View style={styles.previewWrap}>
+              <Image source={{ uri: capturedUri }} style={styles.preview} />
+              <View style={styles.row}>
+                <TouchableOpacity
+                  style={styles.btn}
+                  onPress={() => saveToLibrary(true)}
+                  disabled={busy}
+                >
+                  <Text style={styles.btnText}>ライブラリ保存</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.btn}
+                  onPress={uploadToApi}
+                  disabled={busy}
+                >
+                  <Text style={styles.btnText}>スタンプ入手</Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                style={[styles.btn, styles.secondary]}
+                onPress={resetCapturedUri}
+                disabled={busy}
+              >
+                <Text style={styles.btnText}>撮り直す</Text>
+              </TouchableOpacity>
+              {busy && <ActivityIndicator style={{ marginTop: 12 }} />}
+            </View>
+          ) : (
+            <>
+              <CameraView
+                ref={cameraRef}
+                style={styles.camera}
+                facing={isBack ? "back" : "front"}
+                flash={flash}
+                zoom={zoom}
+              />
+
+              <View style={styles.controls}>
+
+                <TouchableOpacity
+                  style={[styles.smallBtn, styles.secondary]}
+                  onPress={() => setIsBack((v) => !v)}
+                  disabled={busy}
+                >
+                  <Text style={styles.smallBtnText}>
+                    {isBack ? "前面" : "背面"}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.shutter}
+                  onPress={takePhoto}
+                  disabled={busy}
+                />
+                <TouchableOpacity
+                  style={[styles.smallBtn, styles.secondary]}
+                  onPress={() =>
+                    setFlash((f) =>
+                      f === "off" ? "on" : f === "on" ? "auto" : "off"
+                    )
+                  }
+                  disabled={busy}
+                >
+                  <Text style={styles.smallBtnText}>Flash: {flash}</Text>
+                </TouchableOpacity>
+              
+              </View>
+            </>
+          )}
         </View>
-      ) : (
-        <>
-          <CameraView
-            ref={cameraRef}
-            style={styles.camera}
-            facing={isBack ? "back" : "front"}
-            flash={flash}
-          />
-          <View style={styles.controls}>
-            <TouchableOpacity
-              style={[styles.smallBtn, styles.secondary]}
-              onPress={() => setIsBack((v) => !v)}
-              disabled={busy}
-            >
-              <Text style={styles.smallBtnText}>
-                {isBack ? "前面" : "背面"}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.shutter}
-              onPress={takePhoto}
-              disabled={busy}
-            />
-            <TouchableOpacity
-              style={[styles.smallBtn, styles.secondary]}
-              onPress={() =>
-                setFlash((f) =>
-                  f === "off" ? "on" : f === "on" ? "auto" : "off"
-                )
-              }
-              disabled={busy}
-            >
-              <Text style={styles.smallBtnText}>Flash: {flash}</Text>
-            </TouchableOpacity>
-          </View>
-        </>
-      )}
-    </View>
+      </GestureDetector>
+    </GestureHandlerRootView>
   );
 }
 
@@ -656,4 +698,13 @@ const styles = StyleSheet.create({
   },
   secondary: { backgroundColor: "#444" },
   row: { flexDirection: "row" },
+  hud: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 12,
+    alignItems: "center",
+    gap: 8,
+  },
+  hudText: { color: "#fff", fontWeight: "700" },
 });
