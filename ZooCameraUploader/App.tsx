@@ -355,18 +355,33 @@ function CameraScreen({ navigation }: any) {
         }
         else
         {
-          let found: boolean = false;
+          let found: string = "";
           STAMP_INFO_LIST.forEach(element => {
             if(d.predict && element.id == d.predict.best_label)
             {
-              found = true; 
+              found = element.id; 
+              
               Alert.alert(`${element.name}を見つけた！`);
             }
           });
-          if(!found)
+          if(found == "")
           {
             // このメッセージが出たらデータの不整合を起こしている可能性あり。
             Alert.alert("[ERROR]動物を見つけられなかった…");
+          }
+          else
+          {
+            let list : StampLog[] = await loadStampList();
+            let index : number = -1; 
+            for(let i: number = 0; i < list.length;i++)
+            {
+              if(list[i].id == found)
+              {
+                index = i; 
+              }
+            }
+            list = await addToday(list, index); 
+            await saveStampList(list);
           }
         }
       }
