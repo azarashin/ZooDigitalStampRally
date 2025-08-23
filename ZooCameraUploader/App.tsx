@@ -68,7 +68,7 @@ type RootStackParamList = {
   Stamps: undefined;
 };
 
-type StampInfo = {
+type StampLog = {
   name: string; 
   acquiredDates: string[];
 }; // ISO日付(YYYY-MM-DD)配列
@@ -109,7 +109,7 @@ function daysDiff(aISO: string, bISO: string): number {
 }
 
 // info → 状態画像（A/B/C）を決定
-function pickStampImage(info: StampInfo, refDateISO = todayISO()) {
+function pickStampImage(info: StampLog, refDateISO = todayISO()) {
   if (!info.acquiredDates?.length) return IMG_A;
   // 1つでも「refDateからRECENT_DAYS以内」があればB、なければC
   const recent = info.acquiredDates.some((d) => {
@@ -120,18 +120,18 @@ function pickStampImage(info: StampInfo, refDateISO = todayISO()) {
 }
 
 // --------- ストレージ ---------
-async function loadStampList(): Promise<StampInfo[]> {
+async function loadStampList(): Promise<StampLog[]> {
   const raw = await AsyncStorage.getItem(STORAGE_KEY);
   if (raw) {
     try {
-      const parsed = JSON.parse(raw) as StampInfo[];
+      const parsed = JSON.parse(raw) as StampLog[];
       return normalizeList(parsed);
     } catch {
       // 壊れていたら初期化
     }
   }
   // 初期化（未入手）
-  const init: StampInfo[] = Array.from({ length: STAMP_COUNT }, (_, i) => ({
+  const init: StampLog[] = Array.from({ length: STAMP_COUNT }, (_, i) => ({
     name: `スタンプ${i + 1}`,
     acquiredDates: [],
   }));
@@ -139,7 +139,7 @@ async function loadStampList(): Promise<StampInfo[]> {
   return init;
 }
 
-function normalizeList(list: StampInfo[]): StampInfo[] {
+function normalizeList(list: StampLog[]): StampLog[] {
   // STAMP_COUNT を変更した場合に合わせる
   const base = Array.from({ length: STAMP_COUNT }, (_, i) => ({
     name: `スタンプ${i + 1}`,
@@ -154,12 +154,12 @@ function normalizeList(list: StampInfo[]): StampInfo[] {
   return base;
 }
 
-async function saveStampList(list: StampInfo[]) {
+async function saveStampList(list: StampLog[]) {
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(list));
 }
 
 // 任意のインデックスに「今日」を追加
-async function addToday(list: StampInfo[], index: number): Promise<StampInfo[]> {
+async function addToday(list: StampLog[], index: number): Promise<StampLog[]> {
   const d = todayISO();
   const next = [...list];
   const arr = new Set(next[index].acquiredDates ?? []);
@@ -395,7 +395,7 @@ function CameraScreen({ navigation }: any) {
 
 // --------- 画面：スタンプ閲覧 ---------
 function StampsScreen() {
-  const [list, setList] = useState<StampInfo[] | null>(null);
+  const [list, setList] = useState<StampLog[] | null>(null);
 
   useFocusEffect(
     useCallback(() => {
