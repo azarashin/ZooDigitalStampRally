@@ -28,6 +28,8 @@ const API_ENDPOINT = "http://192.168.0.37:3000/api/upload";
 import { AnalyzeResponse } from "./analyze_response"
 import { StampInfo } from "./stamp_info"
 import { RootStackParamList } from "./root_stack_param_list"
+import { StampLog } from "./stamp_log"
+
 
 
 const ICON_ROOT : string = "https://pit-creation.com/OpenDataHackathon2025/images/firefly" 
@@ -71,11 +73,6 @@ const RECENT_DAYS = 7;
 // ===============================================
 
 
-type StampLog = {
-  id: string; 
-  name: string; 
-  acquiredDates: string[];
-}; // ISO日付(YYYY-MM-DD)配列
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
