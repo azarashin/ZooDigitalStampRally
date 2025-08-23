@@ -14,7 +14,6 @@ import {
 } from "react-native";
 import { NavigationContainer, useFocusEffect } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as MediaLibrary from "expo-media-library";
 import * as ImageManipulator from "expo-image-manipulator";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -30,6 +29,7 @@ import { StampInfo } from "./stamp_info"
 import { RootStackParamList } from "./root_stack_param_list"
 import { StampLog } from "./stamp_log"
 import { pickStampImage } from "./datetime_utility"
+import { loadStampList, saveStampList, deleteLog, addToday, clamp } from "./storage"
 
 
 
@@ -75,70 +75,6 @@ const RECENT_DAYS = 7;
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// --------- ストレージ ---------
-async function loadStampList(): Promise<StampLog[]> {
-  const raw = await AsyncStorage.getItem(STORAGE_KEY);
-  if (raw) {
-    try {
-      const parsed = JSON.parse(raw) as StampLog[];
-      return normalizeList(parsed);
-    } catch {
-      // 壊れていたら初期化
-    }
-  }
-  // 初期化（未入手）
-  const init: StampLog[] = Array.from({ length: STAMP_COUNT }, (_, i) => ({
-    id: STAMP_INFO_LIST[i].id,
-    name: STAMP_INFO_LIST[i].name,
-    acquiredDates: [],
-  }));
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(init));
-  return init;
-}
-
-function normalizeList(list: StampLog[]): StampLog[] {
-  // STAMP_COUNT を変更した場合に合わせる
-  const base = Array.from({ length: STAMP_COUNT }, (_, i) => ({
-    id: STAMP_INFO_LIST[i].id,
-    name: STAMP_INFO_LIST[i].name,
-    acquiredDates: [] as string[],
-  }));
-  for (let i = 0; i < Math.min(list.length, base.length); i++) {
-    base[i] = {
-      id: list[i]?.id ?? base[i].id,
-      name: list[i]?.name ?? base[i].name,
-      acquiredDates: Array.isArray(list[i]?.acquiredDates) ? list[i].acquiredDates : [],
-    };
-  }
-  return base;
-}
-
-async function DeleteLog() {
-  const init: StampLog[] = Array.from({ length: STAMP_COUNT }, (_, i) => ({
-    id: STAMP_INFO_LIST[i].id,
-    name: STAMP_INFO_LIST[i].name,
-    acquiredDates: [],
-  }));
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(init));
-  Alert.alert("記録を削除しました");
-}
-
-async function saveStampList(list: StampLog[]) {
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-}
-
-// 任意のインデックスに「今日」を追加
-async function addToday(list: StampLog[], index: number): Promise<StampLog[]> {
-  const d = todayISO();
-  const next = [...list];
-  const arr = new Set(next[index].acquiredDates ?? []);
-  arr.add(d);
-  next[index] = { ...next[index], acquiredDates: Array.from(arr).sort() };
-  await saveStampList(next);
-  return next;
-}
-
-const clamp = (v: number, min = 0, max = 1) => Math.min(max, Math.max(min, v));
 
 // ----- トップ画面 -----
 function HomeScreen({ navigation }: any) {
@@ -164,7 +100,7 @@ function HomeScreen({ navigation }: any) {
           </Pressable>
           <Pressable
             style={[styles.primaryBtn, styles.secondaryBtn, styles.mt12]}
-            onPress={async () => await DeleteLog()}
+            onPress={async () => await deleteLog(STORAGE_KEY, STAMP_INFO_LIST)}
           >
             <Text style={styles.btnText}>【開発用】ログを削除する</Text>
           </Pressable>
@@ -322,7 +258,7 @@ function CameraScreen({ navigation }: any) {
           }
           else
           {
-            let list : StampLog[] = await loadStampList();
+            let list : StampLog[] = await loadStampList(STORAGE_KEY, STAMP_INFO_LIST);
             let index : number = -1; 
             for(let i: number = 0; i < list.length;i++)
             {
@@ -333,7 +269,7 @@ function CameraScreen({ navigation }: any) {
             }
             if(index != -1)
             {
-              list = await addToday(list, index); 
+              list = await addToday(STORAGE_KEY, list, index); 
               saveToLibrary(false);
               navigation.navigate("Stamps");
             }
@@ -341,7 +277,7 @@ function CameraScreen({ navigation }: any) {
             {
               Alert.alert("[ERROR]インデックスエラー");
             }
-            await saveStampList(list);
+            await saveStampList(STORAGE_KEY, list);
           }
         }
       }
@@ -462,12 +398,12 @@ function StampsScreen() {
     useCallback(() => {
       let alive = true;
       (async () => {
-        let arr = await loadStampList();
+        let arr = await loadStampList(STORAGE_KEY, STAMP_INFO_LIST);
 
         // 旧仕様の「表示のたび押す」を残したい場合はここで1件追加
         if (AUTO_STAMP_ON_VIEW) {
           const idx = arr.findIndex((s) => (s.acquiredDates ?? []).length === 0);
-          if (idx !== -1) arr = await addToday(arr, idx);
+          if (idx !== -1) arr = await addToday(STORAGE_KEY, arr, idx);
         }
 
         if (alive) setList(arr);
