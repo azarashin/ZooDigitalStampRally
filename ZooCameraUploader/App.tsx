@@ -347,6 +347,7 @@ function CameraScreen({ navigation }: any) {
               found = element.id; 
               
               Alert.alert(`${element.name}を見つけた！`);
+              navigation.navigate("Stamps");
             }
           });
           if(found == "")
