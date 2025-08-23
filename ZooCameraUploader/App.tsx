@@ -41,8 +41,36 @@ predict?: {
   bytes?: number;
 };
 
+type StampInfo = {
+  id: string;
+  name: string;
+
+};
+
+const ICON_ROOT : string = "https://pit-creation.com/OpenDataHackathon2025/images/firefly" 
+
 // ===================== 設定 =====================
-const STAMP_COUNT = 12; // ← スタンプ数（N）
+const STAMP_INFO_LIST : StampInfo[] = [
+  {id: "Acinonyx jubatus", name: "チーター"}, 
+  {id: "Anser cygnoides", name: "サカツラガン"}, 
+  {id: "Bubalus bubalis", name: "スイギュウ"}, 
+  {id: "Capricornis swinhoei", name: "タイワンカモシカ"}, 
+  {id: "Elephas maximus", name: "アジアゾウ"}, 
+  {id: "Giraffa giraffa giraffa", name: "ミナミキリン"}, 
+  {id: "Hylobates lar", name: "シロテテナガザル"}, 
+  {id: "Leptailurus serval", name: "サーバル"}, 
+  {id: "Loxodonta africana", name: "アフリカゾウ"}, 
+  {id: "Macaca fuscata", name: "ニホンザル"}, 
+  {id: "Oryx leucoryx", name: "アラビアオリックス"}, 
+  {id: "Osphranter rufus", name: "アカカンガルー"}, 
+  {id: "Pan troglodytes", name: "チンパンジー"}, 
+  {id: "Phascolarctos cinereus", name: "コアラ"}, 
+  {id: "Pongo pygmaeus", name: "ボルネオオランウータン"}, 
+  {id: "Rangifer tarandus", name: "トナカイ"}, 
+  {id: "Rhinoceros unicornis", name: "インドサイ"}, 
+
+];
+const STAMP_COUNT = STAMP_INFO_LIST.length; // ← スタンプ数（N）
 const STORAGE_KEY = "stamps/v1";
 const BG_IMAGE = {
   // ← トップ画面の背景。任意のURLに変えてOK（ローカルなら require("./assets/bg.jpg")）
@@ -50,9 +78,7 @@ const BG_IMAGE = {
 };
 // 状態画像（A=未入手 / B=7日以内 / C=7日より前）
 // ※ 実運用は下記を require("./assets/a.png") などローカルへ差し替えてください
-const IMG_A = { uri: "https://placehold.co/240x240?text=A" };
-const IMG_B = { uri: "https://placehold.co/240x240/2ecc71/fff?text=B" };
-const IMG_C = { uri: "https://placehold.co/240x240/f1c40f/222?text=C" };
+const IMG_UNKNOWN = { uri: `${ICON_ROOT}/unknown.png` };
 
 
 // 画面表示時に自動で「今日付」を1件付与するか（以前の自動押印動作を残す場合は true）
@@ -69,6 +95,7 @@ type RootStackParamList = {
 };
 
 type StampLog = {
+  id: string; 
   name: string; 
   acquiredDates: string[];
 }; // ISO日付(YYYY-MM-DD)配列
@@ -110,13 +137,19 @@ function daysDiff(aISO: string, bISO: string): number {
 
 // info → 状態画像（A/B/C）を決定
 function pickStampImage(info: StampLog, refDateISO = todayISO()) {
-  if (!info.acquiredDates?.length) return IMG_A;
+  if (!info.acquiredDates?.length) return IMG_UNKNOWN;
   // 1つでも「refDateからRECENT_DAYS以内」があればB、なければC
   const recent = info.acquiredDates.some((d) => {
     const diff = Math.abs(daysDiff(d, refDateISO));
     return diff <= RECENT_DAYS;
   });
-  return recent ? IMG_B : IMG_C;
+  return recent ? 
+  {
+    uri: `${ICON_ROOT}/animal_icon/${info.id}/active.jpg`
+  } : 
+  {
+    uri: `${ICON_ROOT}/animal_icon/${info.id}/sleep.jpg`
+  };
 }
 
 // --------- ストレージ ---------
@@ -132,7 +165,8 @@ async function loadStampList(): Promise<StampLog[]> {
   }
   // 初期化（未入手）
   const init: StampLog[] = Array.from({ length: STAMP_COUNT }, (_, i) => ({
-    name: `スタンプ${i + 1}`,
+    id: STAMP_INFO_LIST[i].id,
+    name: STAMP_INFO_LIST[i].name,
     acquiredDates: [],
   }));
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(init));
@@ -142,11 +176,13 @@ async function loadStampList(): Promise<StampLog[]> {
 function normalizeList(list: StampLog[]): StampLog[] {
   // STAMP_COUNT を変更した場合に合わせる
   const base = Array.from({ length: STAMP_COUNT }, (_, i) => ({
-    name: `スタンプ${i + 1}`,
+    id: STAMP_INFO_LIST[i].id,
+    name: STAMP_INFO_LIST[i].name,
     acquiredDates: [] as string[],
   }));
   for (let i = 0; i < Math.min(list.length, base.length); i++) {
     base[i] = {
+      id: list[i]?.id ?? base[i].id,
       name: list[i]?.name ?? base[i].name,
       acquiredDates: Array.isArray(list[i]?.acquiredDates) ? list[i].acquiredDates : [],
     };
@@ -445,6 +481,7 @@ function StampsScreen() {
         columnWrapperStyle={{ gap: 12 }}
         renderItem={({ item }) => (
           <StampCell
+            id={item.id}
             name={item.name}
             dates={item.acquiredDates}
             onAddToday={async () => {
@@ -460,15 +497,17 @@ function StampsScreen() {
 }
 
 function StampCell({
+  id,
   name,
   dates,
   onAddToday,
 }: {
+  id: string;
   name: string;
   dates: string[];
   onAddToday: () => void;
 }) {
-  const img = pickStampImage({ name, acquiredDates: dates });
+  const img = pickStampImage({ name, id, acquiredDates: dates });
   const latest = dates.length ? dates[dates.length - 1] : null;
 
   return (
