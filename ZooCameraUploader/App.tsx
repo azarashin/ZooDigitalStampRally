@@ -646,7 +646,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 24,
     right: 24,
-    bottom: 64,          // ← 下寄せの距離（お好みで調整）
+    top: 320,          // ← 下寄せの距離（お好みで調整）
     alignItems: "center" // ボタンの横位置
   },
   mt12: { marginTop: 12 }, // ボタン間スペース  
