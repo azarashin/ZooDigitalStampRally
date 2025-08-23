@@ -583,6 +583,16 @@ function StampsScreen() {
   );
 }
 
+const pad = (n: number) => String(n).padStart(2, "0");
+
+// YYYY/MM/DD HH:mm
+// 上記のフォーマットで日付を変換。
+function MakeShortTimestamp(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) throw new Error("Invalid date");
+  return `${d.getUTCFullYear()}/${pad(d.getUTCMonth() + 1)}/${pad(d.getUTCDate())} ` +
+         `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+}
 function StampCell({
   id,
   name,
@@ -602,7 +612,7 @@ function StampCell({
         {name}
       </Text>
       <Text style={styles.cellMeta}>
-        {latest ? `${latest}` : "未入手"}
+        {latest ? `${MakeShortTimestamp(latest)}` : "未入手"}
       </Text>
     </Pressable>
   );
