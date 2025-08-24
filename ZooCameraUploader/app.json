@@ -13,7 +13,7 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true, 
+      "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "このアプリは写真撮影のためにカメラを使用します。",
         "NSPhotoLibraryAddUsageDescription": "このアプリは写真をフォトライブラリに保存します。"
@@ -24,21 +24,30 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true, 
-      "permissions": ["CAMERA", "READ_MEDIA_IMAGES", "WRITE_EXTERNAL_STORAGE"]
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }, 
+    },
     "plugins": [
       [
         "expo-camera",
-        { "cameraPermission": "このアプリは写真撮影のためにカメラを使用します。" }
+        {
+          "cameraPermission": "このアプリは写真撮影のためにカメラを使用します。"
+        }
       ],
       [
         "expo-media-library",
-        { "photosPermission": "撮影した写真をフォトライブラリに保存します。" }
-      ]
+        {
+          "photosPermission": "撮影した写真をフォトライブラリに保存します。"
+        }
+      ],
+      "expo-web-browser"
     ]
   }
 }

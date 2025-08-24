@@ -13,7 +13,7 @@ export function todayISO(): string {
   return `${y}-${m}-${day}T${hour}:${minute}:${second}Z`; // 端末TZのローカル日付ベース
 }
 
-function daysDiff(afterISO: string, beforeISO: string): number {
+export function daysDiff(afterISO: string, beforeISO: string): number {
   const before = new Date(beforeISO);
   const after = new Date(afterISO);
   const ms = after.getTime() - before.getTime();

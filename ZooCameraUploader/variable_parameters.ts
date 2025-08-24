@@ -22,3 +22,7 @@ export const STAMP_INFO_LIST : StampInfo[] = [
 
 ];
 export const STAMP_COUNT = STAMP_INFO_LIST.length; // ← スタンプ数（N）
+
+export const PLACE = "多摩動物公園";
+export const PLACE_X_ACCOUNT = "tamazoopark";
+export const PLACE_URL = "https://www.tokyo-zoo.net/zoo/tama/";

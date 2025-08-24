@@ -20,7 +20,7 @@ import {
   RECENT_DAYS, 
   IMG_UNKNOWN} from "./constant_parameters";
 import {STAMP_INFO_LIST, STAMP_COUNT} from "./variable_parameters";
-
+import XTweetButton from "./x_tweet_button"
 
 // --------- 画面：スタンプ閲覧 ---------
 export function StampsScreen() {
@@ -64,6 +64,8 @@ export function StampsScreen() {
         <Text style={styles.graySm}>
           ゲットして１週間以上経つと寝てしまうよ
         </Text>
+        <XTweetButton
+        />
       </View>
 
       <FlatList
